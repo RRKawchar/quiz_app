@@ -1,30 +1,41 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quiz_app/constants/colors.dart';
-import 'package:quiz_app/constants/images.dart';
+import 'package:quiz_app/constants/text_style.dart';
 import 'package:quiz_app/controllers/quiz_controller.dart';
+import 'package:quiz_app/widgets/custom_icon_button.dart';
 
-class QuizScreen extends GetView<QuizController> {
+class QuizScreen extends StatefulWidget {
+  QuizScreen({Key? key}) : super(key: key);
+
+  @override
+  State<QuizScreen> createState() => _QuizScreenState();
+}
+
+class _QuizScreenState extends State<QuizScreen> {
+  final QuizController quizController = Get.put(QuizController());
+
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Scaffold(
-      body: SafeArea(
-        child: FutureBuilder<List<dynamic>>(
-          future: controller.quiz,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              final data = snapshot.data!;
-              if (!controller.isLoading) {
-                controller.optionList =
-                data[controller.currentQuestionIndex]['incorrect_answers'];
-                controller.optionList
-                    .add(data[controller.currentQuestionIndex]['correct_answer']);
-                controller.optionList.shuffle();
-                controller.isLoading = true;
-              }
+      body: SafeArea(child: Obx(() {
 
-              return Container(
+
+
+        if (quizController.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+
+        return Builder(
+          builder: (BuildContext context){
+            final currentQuestion = quizController.questions[quizController.currentQuestionIndex.value];
+            return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 width: double.infinity,
                 height: double.infinity,
@@ -38,133 +49,114 @@ class QuizScreen extends GetView<QuizController> {
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          IconButton(
+                          CustomIconButton(
                             onPressed: () {
                               Get.back();
                             },
-                            icon: Icon(Icons.arrow_back, color: Colors.white),
+                            icon: CupertinoIcons.back,
                           ),
                           Obx(
                                 () => Stack(
                               alignment: Alignment.center,
                               children: [
-                                Text(
-                                  '${controller.second}',
-                                  style: TextStyle(fontSize: 24, color: Colors.white),
+                                normalText(
+                                  text: '${quizController.seconds}',
+                                  color: lightgrey,
+                                  fontSize: 22,
                                 ),
                                 SizedBox(
-                                  height: 60,
-                                  width: 60,
+                                  height: 50,
+                                  width: 50,
                                   child: CircularProgressIndicator(
-                                    value: controller.second / 60,
-                                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                                    value: quizController.seconds.value / 60,
+                                    valueColor:
+                                    const AlwaysStoppedAnimation(Colors.white),
                                   ),
-                                )
+                                ),
                               ],
                             ),
                           ),
                           Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: lightgrey, width: 2),
-                            ),
-                            child: TextButton.icon(
-                              onPressed: () {},
-                              icon: Icon(
-                                Icons.favorite,
-                                color: Colors.white,
-                              ),
-                              label: Text(
-                                'Like',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: lightgrey, width: 2)),
+                              child: TextButton.icon(
+                                  onPressed: () {},
+                                  icon: const Icon(
+                                    CupertinoIcons.heart_fill,
+                                    size: 20,
+                                    color: Colors.white,
+                                  ),
+                                  label: normalText(
+                                      text: "Like", color: Colors.white)))
                         ],
                       ),
-                      const SizedBox(height: 20),
-                      Image.asset(
-                        ideas,
-                        width: 200,
+                      const SizedBox(
+                        height: 20,
                       ),
-                      const SizedBox(height: 20),
+                      Image.asset(
+                        'assets/images/ideas.png',
+                        width: 200,
+                        height: 200,
+                      ),
+                      const SizedBox(
+                        height: 20,
+                      ),
                       Align(
                         alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Question ${controller.currentQuestionIndex + 1} of ${data.length}',
-                          style: TextStyle(
+                        child: Obx(
+
+                              () => normalText(
+                            text: 'Question ${quizController.currentQuestionIndex + 1} of ${quizController.questions.length}',
                             color: lightgrey,
-                            fontSize: 18,
+                            fontSize: 20,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      Text(
-                        data[controller.currentQuestionIndex]['question'],
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.white,
-                        ),
+                      const SizedBox(
+                        height: 20,
                       ),
-                      const SizedBox(height: 20),
+
+                      normalText(
+                        text: quizController.questions[0].question,
+                        color: Colors.white,
+                        fontSize: 20,
+                      ),
+
+                      const SizedBox(
+                        height: 20,
+                      ),
+
                       ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: controller.optionList.length,
-                        itemBuilder: (context, index) {
-                          final answer =
-                          data[controller.currentQuestionIndex]['correct_answer'];
-
-                          return GestureDetector(
-                            onTap: () {
-                              controller.resetColor();
-                              if (answer.toString() ==
-                                  controller.optionList[index].toString()) {
-                                controller.optionColor[index].value = Colors.green;
-                                controller.points += 10;
-                              } else {
-                                controller.optionColor[index].value = Colors.red;
-                              }
-
-                              controller.gotoNextQuestion();
-                            },
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 20),
-                              alignment: Alignment.center,
-                              width: size.width - 100,
-                              padding: const EdgeInsets.all(18),
-                              decoration: BoxDecoration(
-                                color: controller.optionColor[index].value,
-                                borderRadius: BorderRadius.circular(12),
+                          itemCount: quizController.optionList.length,
+                          shrinkWrap: true,
+                          itemBuilder: (context, index) {
+                            final option = quizController.optionList[index];
+                            return GestureDetector(
+                              onTap: (){
+                                quizController.selectOption(option);
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 20),
+                                alignment: Alignment.center,
+                                width: size.width - 100,
+                                padding: const EdgeInsets.all(18),
+                                decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12)),
+                                child: headingText(text: 'Continue'),
                               ),
-                              child: Text(
-                                '${controller.optionList[index]}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                            );
+                          })
+
                     ],
                   ),
-                ),
-              );
-            } else {
-              return const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation(Colors.red),
-                ),
-              );
-            }
+                ));
           },
-        ),
-      ),
+
+        );
+      })),
     );
   }
 }

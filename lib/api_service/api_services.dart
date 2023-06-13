@@ -1,43 +1,23 @@
-
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:quiz_app/model/quiz_model.dart';
-var url="https://opentdb.com/api.php?amount=20";
 
+class ApiServices {
+  static ApiServices instance = ApiServices();
 
-getQuiz()async{
-  var response= await http.get(Uri.parse(url));
+  var baseUrl = "https://opentdb.com/api.php?amount=20";
 
-  if(response.statusCode==200){
-    var data=jsonDecode(response.body.toString());
-    print("Quiz data loaded");
-    return data;
-  }else{
-    throw Exception('Failed to load data');
-  }
-}
+  Future<QuizModel> getQuizQuestions() async {
+    final url = Uri.parse('https://opentdb.com/api.php?amount=20');
+    final response = await http.get(url);
 
-
-
-class ApiServices{
-
-  static ApiServices instance =ApiServices();
-
-
-  Future<List<QuizModel>> getQuizData()async{
-
-    var response=await http.get(Uri.parse(url));
-
-    if(response.statusCode==200){
-      final Map<String,dynamic> data=json.decode(response.body);
-
-      return List<QuizModel>.from(data['results'].map((element)=>QuizModel.fromJson(element)));
-    }else{
-      throw Exception('Failed to load questions');
+    if (response.statusCode == 200) {
+      final jsonBody = json.decode(response.body);
+      final quizModel = QuizModel.fromJson(jsonBody);
+      return quizModel;
+    } else {
+      throw Exception('Failed to fetch quiz questions');
     }
-
-
   }
-
 }
