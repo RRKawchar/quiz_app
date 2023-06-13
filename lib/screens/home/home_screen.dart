@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quiz_app/api_service/api_services.dart';
 import 'package:quiz_app/constants/colors.dart';
 import 'package:quiz_app/screens/home/components/home_items.dart';
 
@@ -8,6 +9,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size=MediaQuery.of(context).size;
+  ApiServices.instance.getQuizData();
     return Scaffold(
       body: SafeArea(
         child: Container(

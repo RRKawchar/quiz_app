@@ -43,7 +43,7 @@ class HomeItems extends StatelessWidget {
             color: lightgrey),
         const Spacer(),
         CustomButton(onTap: () {
-          push(context: context, screen: const QuizScreen());
+           push(context: context, screen:  QuizScreen());
         })
       ],
     );
